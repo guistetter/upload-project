@@ -5,7 +5,7 @@ require('dotenv/config')
 const s3 = require('s3')
 const multer = require('multer')
 const upload = multer({dest: 'uploads'})
-
+const fs = require('fs')
 const paramsS3 = {
   s3Options:{
     accessKeyId: process.env.ACCESS_ID,
@@ -32,6 +32,7 @@ app.post('/upload', upload.single('foto'),(req, res) => {
   }
   const uploader = client.uploadFile(params)
   uploader.on('end', () => {
+    fs.unlinkSync(req.file.path)
     res.send(req.file)
   })
 })
