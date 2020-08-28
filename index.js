@@ -6,6 +6,16 @@ const s3 = require('s3')
 const multer = require('multer')
 const upload = multer({dest: 'uploads'})
 const fs = require('fs')
+const Sequelize = require('sequelize')
+
+const sequelize = new Sequelize(process.env.DATABASE_DATABASE, process.env.DATABASE_USER, process.env.DATABASE_SECRET,{
+  dialect: 'mysql',
+  host: process.env.DATABASE_HOST
+})
+//name sera o key no s3...
+const Arquivo = sequelize.define('Arquivo',{
+  name: Sequelize.STRING
+})
 
 const s3Config = {
   accessKeyId: process.env.ACCESS_ID,
@@ -78,4 +88,6 @@ app.post('/upload', upload.single('foto'), async(req, res) => {
 //   })
 // })
 
-app.listen(3000,() => console.log('running...'))
+sequelize.sync().then(()=>{
+  app.listen(3000,() => console.log('running...'))
+})
