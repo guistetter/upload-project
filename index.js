@@ -46,9 +46,22 @@ uploadToS3 = (file, key, mimetype, s3Config) => {
     })
   })
 }
+const removeFile = (file) =>{
+  return new Promise((resolve,reject)=>{
+    fs.unlink(file, (err)=>{
+      if(err){
+        reject(err)
+      }else{
+        resolve()
+      }
+    })
+  })
+}
 app.post('/upload', upload.single('foto'), async(req, res) => {
   await uploadToS3(req.file.path, req.file.originalname, req.file.mimetype, s3Config)
-  res.send(req.file)
+  await removeFile(req.file.path)
+  //res.send(req.file)
+  res.redirect('/')
 })
 // app.post('/upload', upload.single('foto'),(req, res) => {
 //   const params = {
