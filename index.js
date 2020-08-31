@@ -8,10 +8,19 @@ const upload = multer({dest: 'uploads'})
 const fs = require('fs')
 const Sequelize = require('sequelize')
 const aws = require('aws-sdk')
+const port = process.env.PORT || 3000
 
-const sequelize = new Sequelize(process.env.DATABASE_DATABASE, process.env.DATABASE_USER, process.env.DATABASE_SECRET,{
+const dbSettings = {
+  hostname: process.env.RDS_HOSTNAME || process.env.DATABASE_HOST,
+  port: process.env.RDS_PORT || '3306',
+  dbName: process.env.RDS_DB_NAME || process.env.DATABASE_DATABASE,
+  username: process.env.RDS_USERNAME || process.env.DATABASE_USER,
+  password: process.env.RDS_PASSWORD || process.env.DATABASE_SECRET
+}
+
+const sequelize = new Sequelize(dbSettings.dbName, dbSettings.username,dbSettings.password,{
   dialect: 'mysql',
-  host: process.env.DATABASE_HOST
+  host: dbSettings.hostname
 })
 
 const Arquivo = sequelize.define('Arquivo',{
@@ -20,10 +29,10 @@ const Arquivo = sequelize.define('Arquivo',{
 })
 
 const s3Config = {
-  accessKeyId: process.env.ACCESS_ID,
-  secretAccessKey: process.env.SECRET_KEY,
-  bucket: 'primeiro-bucket-s3',
-  region: 'us-east-1'
+  accessKeyId: process.env.S3_ACCESS_KEY || process.env.ACCESS_ID,
+  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.SECRET_KEY,
+  region: process.env.S3_REGION ||'us-east-1',
+  bucket: process.env.S3_BUCKET ||'primeiro-bucket-s3'
 }
 aws.config = new aws.Config(s3Config)
 const s3SDK = new aws.S3()
@@ -103,5 +112,5 @@ app.post('/upload', upload.single('foto'), async(req, res) => {
 // })
 
 sequelize.sync().then(()=>{
-  app.listen(3000,() => console.log('running...'))
+  app.listen(port,() => console.log('running...'))
 })
