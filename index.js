@@ -7,14 +7,16 @@ const multer = require('multer')
 const upload = multer({dest: 'uploads'})
 const fs = require('fs')
 const Sequelize = require('sequelize')
+const aws = require('aws-sdk')
 
 const sequelize = new Sequelize(process.env.DATABASE_DATABASE, process.env.DATABASE_USER, process.env.DATABASE_SECRET,{
   dialect: 'mysql',
   host: process.env.DATABASE_HOST
 })
-//name sera o key no s3...
+
 const Arquivo = sequelize.define('Arquivo',{
   name: Sequelize.STRING
+  //name sera o key no s3...
 })
 
 const s3Config = {
@@ -23,22 +25,30 @@ const s3Config = {
   bucket: 'primeiro-bucket-s3',
   region: 'us-east-1'
 }
-// const paramsS3 = {
-//   s3Options:{
-//     accessKeyId: process.env.ACCESS_ID,
-//     secretAccessKey: process.env.SECRET_KEY,
-//     region: 'us-east-1'
-//   }
-// }
-// const client = s3.createClient(paramsS3)
+aws.config = new aws.Config(s3Config)
+const s3SDK = new aws.S3()
+
 const client = s3.createClient({s3Options: s3Config})
 
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
-app.get('/', (req, res) =>{
-  res.render('index')
+app.get('/', async(req, res)=>  {
+  const arquivos = await Arquivo.findAll()
+  res.render('index',{arquivos})
 })
+
+app.get('/ver/:id', async(req, res)=>  {
+   const arquivo = await Arquivo.findById(req.params.id)
+   const s3File = {
+    Bucket: s3Config.bucket,
+    Key: arquivo.name,
+    Expires:10
+  }
+  const signedUrl = s3SDK.getSignedUrl('getObject', s3File)
+   res.redirect(signedUrl)
+})
+
 
 uploadToS3 = (file, key, mimetype, s3Config) => {
   const params = {
