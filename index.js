@@ -67,9 +67,13 @@ const removeFile = (file) =>{
     })
   })
 }
+
 app.post('/upload', upload.single('foto'), async(req, res) => {
   await uploadToS3(req.file.path, req.file.originalname, req.file.mimetype, s3Config)
   await removeFile(req.file.path)
+  const arquivo = await Arquivo.create({
+    name: req.file.originalname
+  })
   //res.send(req.file)
   res.redirect('/')
 })
